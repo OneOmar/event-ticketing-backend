@@ -1,0 +1,28 @@
+services:
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:latest
+    container_name: event-ticketing-db
+    restart: always
+
+    environment:
+      POSTGRES_DB: event_ticketing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changemeinprod!
+
+    ports:
+      - "5432:5432"
+
+  # Database management UI
+  adminer:
+    image: adminer:latest
+    container_name: event-ticketing-adminer
+    restart: always
+
+    ports:
+      - "8081:8080"
+
+    depends_on:
+      # Start postgres first
+      - postgres
