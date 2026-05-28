@@ -26,3 +26,26 @@ services:
     depends_on:
       # Start postgres first
       - postgres
+
+  # Keycloak authentication server
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: event-ticketing-keycloak
+    restart: always
+
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
+    ports:
+      - "8082:8080"
+
+    command:
+      - start-dev
+      - --db=dev-file
+
+volumes:
+  keycloak_data:
