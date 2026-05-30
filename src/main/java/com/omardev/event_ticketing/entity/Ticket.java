@@ -1,13 +1,12 @@
 package com.omardev.event_ticketing.entity;
 
-import com.omardev.event_ticketing.enums.QrCodeStatus;
 import com.omardev.event_ticketing.enums.TicketStatus;
-import com.omardev.event_ticketing.enums.TicketValidationMethod;
-import com.omardev.event_ticketing.enums.TicketValidationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -37,38 +36,15 @@ public class Ticket {
     private TicketStatus status;
 
     /*
-     * Validation state at event entrance.
+     * QR codes associated with this ticket.
+     * One ticket can have multiple QR codes.
      */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TicketValidationStatus validationStatus;
-
-    /*
-     * Validation method used for check-in.
-     */
-    @Column(name = "validation_method")
-    @Enumerated(EnumType.STRING)
-    private TicketValidationMethod validationMethod;
-
-    /*
-     * QR code status associated with this ticket.
-     */
-    @Column(name = "qr_code_status")
-    @Enumerated(EnumType.STRING)
-    private QrCodeStatus qrCodeStatus;
-
-    /*
-     * Date/time when the ticket was validated.
-     */
-    @Column(name = "validated_at")
-    private LocalDateTime validatedAt;
-
-    /*
-     * User who owns this ticket.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    @OneToMany(
+            mappedBy = "ticket",
+            fetch = FetchType.LAZY,
+            orphanRemoval = true
+    )
+    private List<QrCode> qrCodes = new ArrayList<>();
 
     /*
      * Event associated with this ticket.
@@ -86,6 +62,27 @@ public class Ticket {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_type_id", nullable = false)
     private TicketType ticketType;
+
+    /*
+     * User who owns this ticket.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
+
+    /*
+     * Ticket validation records.
+     * Example:
+     * - Ticket scanned by a user
+     * - Ticket validated by an admin
+     * - Ticket validated by a staff member
+     */
+    @OneToMany(
+            mappedBy = "ticket",
+            fetch = FetchType.LAZY,
+            orphanRemoval = true
+    )
+    private List<TicketValidation> ticketValidations = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
