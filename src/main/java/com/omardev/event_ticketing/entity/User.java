@@ -59,8 +59,13 @@ public class User {
     @ManyToMany(mappedBy = "staffMembers", fetch = FetchType.LAZY)
     private List<Event> staffedEvents = new ArrayList<>();
 
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private List<Ticket> tickets = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist

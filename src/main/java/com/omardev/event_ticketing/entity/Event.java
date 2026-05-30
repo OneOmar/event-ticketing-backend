@@ -2,6 +2,7 @@ package com.omardev.event_ticketing.entity;
 
 import com.omardev.event_ticketing.enums.EventStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -34,12 +35,13 @@ public class Event {
     @Column(nullable = false)
     private String bannerUrl;
 
-    @Column(nullable = false)
+    @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;
 
-    @Column(nullable = false)
+    @Column(name = "end_date", nullable = false)
     private LocalDateTime endDate;
 
+    @Positive
     @Column(nullable = false)
     private Integer capacity;
 
@@ -82,8 +84,16 @@ public class Event {
     )
     private List<User> staffMembers = new ArrayList<>();
 
+    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
+    private List<TicketType> ticketTypes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
+    private List<Ticket> tickets = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
