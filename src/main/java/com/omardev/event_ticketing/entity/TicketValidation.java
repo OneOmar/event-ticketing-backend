@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -40,4 +41,16 @@ public class TicketValidation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "validated_by")
     private User validatedBy;
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        TicketValidation that = (TicketValidation) o;
+        return Objects.equals(id, that.id) && status == that.status && method == that.method && Objects.equals(validatedAt, that.validatedAt) && Objects.equals(notes, that.notes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, status, method, validatedAt, notes);
+    }
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -67,5 +68,17 @@ public class QrCode {
     @PreUpdate
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        QrCode qrCode = (QrCode) o;
+        return Objects.equals(id, qrCode.id) && Objects.equals(code, qrCode.code) && status == qrCode.status && Objects.equals(expiresAt, qrCode.expiresAt) && Objects.equals(usedAt, qrCode.usedAt) && Objects.equals(createdAt, qrCode.createdAt) && Objects.equals(updatedAt, qrCode.updatedAt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, code, status, expiresAt, usedAt, createdAt, updatedAt);
     }
 }
