@@ -1,6 +1,8 @@
 package com.omardev.event_ticketing.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -13,7 +15,6 @@ import java.util.UUID;
 @Table(name = "users")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -26,17 +27,27 @@ public class User {
      * Reference to the Keycloak user ID (JWT subject claim).
      * Used to synchronize application users with Keycloak identities.
      */
-    @Column(nullable = false, unique = true)
+    @NotBlank
+    @Column(name = "keycloak_id", nullable = false, unique = true)
     private String keycloakId;
 
+    @Email
+    @NotBlank
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String name;
+    @NotBlank
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
 
+    @NotBlank
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "profile_picture_url")
     private String profilePictureUrl;
 
     @Column(nullable = false)
@@ -60,6 +71,9 @@ public class User {
     @ManyToMany(mappedBy = "staffMembers", fetch = FetchType.LAZY)
     private List<Event> staffedEvents = new ArrayList<>();
 
+    /*
+     * Tickets owned by the user.
+     */
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
     private List<Ticket> tickets = new ArrayList<>();
 
@@ -85,11 +99,11 @@ public class User {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return enabled == user.enabled && Objects.equals(id, user.id) && Objects.equals(keycloakId, user.keycloakId) && Objects.equals(email, user.email) && Objects.equals(name, user.name) && Objects.equals(phoneNumber, user.phoneNumber) && Objects.equals(profilePictureUrl, user.profilePictureUrl) && Objects.equals(createdAt, user.createdAt) && Objects.equals(updatedAt, user.updatedAt);
+        return Objects.equals(id, user.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, keycloakId, email, name, phoneNumber, profilePictureUrl, enabled, createdAt, updatedAt);
+        return Objects.hashCode(id);
     }
 }
