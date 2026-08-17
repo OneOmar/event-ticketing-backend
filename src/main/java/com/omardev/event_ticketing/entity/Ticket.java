@@ -3,6 +3,9 @@ package com.omardev.event_ticketing.entity;
 import com.omardev.event_ticketing.enums.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,6 +14,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "tickets")
 @Getter
 @Setter
@@ -85,33 +89,25 @@ public class Ticket {
     )
     private List<TicketValidation> ticketValidations = new ArrayList<>();
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    public void onCreate() {
-
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         Ticket ticket = (Ticket) o;
-        return Objects.equals(id, ticket.id) && Objects.equals(ticketCode, ticket.ticketCode) && status == ticket.status && Objects.equals(createdAt, ticket.createdAt) && Objects.equals(updatedAt, ticket.updatedAt);
+        return id != null && Objects.equals(id, ticket.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, ticketCode, status, createdAt, updatedAt);
+        return getClass().hashCode();
     }
 }

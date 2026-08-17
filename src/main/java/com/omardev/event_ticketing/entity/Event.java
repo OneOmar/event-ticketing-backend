@@ -4,6 +4,9 @@ import com.omardev.event_ticketing.enums.EventStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +15,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "events")
 @Getter
 @Setter
@@ -91,17 +95,16 @@ public class Event {
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
     private List<Ticket> tickets = new ArrayList<>();
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
     public void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-
         if (status == null) {
             status = EventStatus.DRAFT;
         }
@@ -116,15 +119,19 @@ public class Event {
         updatedAt = LocalDateTime.now();
     }
 
+
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         Event event = (Event) o;
-        return Objects.equals(id, event.id) && Objects.equals(title, event.title) && Objects.equals(description, event.description) && Objects.equals(location, event.location) && Objects.equals(bannerUrl, event.bannerUrl) && Objects.equals(startDate, event.startDate) && Objects.equals(endDate, event.endDate) && Objects.equals(capacity, event.capacity) && Objects.equals(availableTickets, event.availableTickets) && status == event.status && Objects.equals(createdAt, event.createdAt) && Objects.equals(updatedAt, event.updatedAt);
+        return id != null && Objects.equals(id, event.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, description, location, bannerUrl, startDate, endDate, capacity, availableTickets, status, createdAt, updatedAt);
+        return getClass().hashCode();
     }
+
 }
