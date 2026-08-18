@@ -1,8 +1,10 @@
 package com.omardev.event_ticketing.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CreateEventRequest(
 
@@ -28,7 +30,10 @@ public record CreateEventRequest(
         @NotNull
         @Positive
         @Min(1)
-        Integer capacity
+        Integer capacity,
+
+        @NotEmpty
+        List<@Valid CreateTicketTypeRequest> ticketTypes
 
 ) {
 }
