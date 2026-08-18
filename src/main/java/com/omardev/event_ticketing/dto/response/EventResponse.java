@@ -22,6 +22,9 @@ public record EventResponse(
         EventStatus status,
 
         UUID organizerId,
-        String organizerName
+        String organizerName,
+
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 
 ) {}
