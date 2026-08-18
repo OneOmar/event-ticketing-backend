@@ -8,26 +8,20 @@ import java.util.UUID;
 public record EventResponse(
 
         UUID id,
-
         String title,
-
         String description,
-
         String location,
-
         String bannerUrl,
 
         LocalDateTime startDate,
-
         LocalDateTime endDate,
 
         Integer capacity,
-
         Integer availableTickets,
 
         EventStatus status,
 
-        LocalDateTime createdAt
+        UUID organizerId,
+        String organizerName
 
-) {
-}
+) {}
