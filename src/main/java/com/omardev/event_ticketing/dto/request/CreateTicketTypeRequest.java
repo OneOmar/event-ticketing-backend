@@ -7,17 +7,18 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public record CreateTicketTypeRequest(
-        @NotBlank
+
+        @NotBlank(message = "Ticket type name is required")
         String name,
 
         String description,
 
-        @NotNull
-        @Positive
+        @NotNull(message = "Price is required")
+        @Positive(message = "Price must be greater than 0")
         BigDecimal price,
 
-        @NotNull
-        @Positive
+        @NotNull(message = "Quantity is required")
+        @Positive(message = "Quantity must be greater than 0")
         Integer quantity
 
 ) {}

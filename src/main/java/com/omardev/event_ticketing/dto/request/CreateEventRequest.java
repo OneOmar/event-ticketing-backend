@@ -8,32 +8,31 @@ import java.util.List;
 
 public record CreateEventRequest(
 
-        @NotBlank
+        @NotBlank(message = "Title is required")
         String title,
 
         String description,
 
-        @NotBlank
+        @NotBlank(message = "Location is required")
         String location,
 
-        @NotBlank
+        @NotBlank(message = "Banner URL is required")
         String bannerUrl,
 
-        @NotNull
-        @Future
+        @NotNull(message = "Start date is required")
+        @Future(message = "Start date must be in the future")
         LocalDateTime startDate,
 
-        @NotNull
-        @Future
+        @NotNull(message = "End date is required")
+        @Future(message = "End date must be in the future")
         LocalDateTime endDate,
 
-        @NotNull
-        @Positive
-        @Min(1)
+        @NotNull(message = "Capacity is required")
+        @Positive(message = "Capacity must be greater than 0")
+        @Min(value = 1, message = "Capacity must be at least 1")
         Integer capacity,
 
-        @NotEmpty
+        @NotEmpty(message = "At least one ticket type is required")
         List<@Valid CreateTicketTypeRequest> ticketTypes
 
-) {
-}
+) {}
