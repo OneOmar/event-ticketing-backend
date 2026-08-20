@@ -6,6 +6,7 @@ import com.omardev.event_ticketing.entity.Event;
 import com.omardev.event_ticketing.entity.TicketType;
 import com.omardev.event_ticketing.entity.User;
 import com.omardev.event_ticketing.enums.EventStatus;
+import com.omardev.event_ticketing.exception.UserNotFoundException;
 import com.omardev.event_ticketing.mapper.EventMapper;
 import com.omardev.event_ticketing.mapper.TicketTypeMapper;
 import com.omardev.event_ticketing.repository.EventRepository;
@@ -38,7 +39,7 @@ public class EventServiceImpl implements EventService {
         String keycloakId = jwt.getSubject();
 
         User organizer = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(keycloakId));
 
         // 2. Map request → Event
         Event event = eventMapper.toEntity(request);
