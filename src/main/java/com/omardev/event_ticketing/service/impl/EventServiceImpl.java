@@ -13,9 +13,12 @@ import com.omardev.event_ticketing.repository.EventRepository;
 import com.omardev.event_ticketing.repository.UserRepository;
 import com.omardev.event_ticketing.service.EventService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -60,5 +63,20 @@ public class EventServiceImpl implements EventService {
 
         // 6. Map to response
         return eventMapper.toResponse(savedEvent);
+    }
+
+
+    /**
+     * Fetch paginated events and map them to DTOs.
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public Page<EventResponse> getAllEvents(Pageable pageable) {
+
+        // Retrieve events from database
+        Page<Event> events = eventRepository.findAll(pageable);
+
+        // Convert entities → DTOs
+        return events.map(eventMapper::toResponse);
     }
 }
