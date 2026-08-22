@@ -136,6 +136,17 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toResponse(eventRepository.save(event));
     }
 
+
+    /**
+     * Ensure the current user is the owner of the event.
+     */
+    private void validateOwnership(Event event, User currentUser) {
+
+        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not allowed to modify this event");
+        }
+    }
+
     @Override
     @Transactional
     public EventResponse updateEvent(UUID eventId, UpdateEventRequest request) {
@@ -148,9 +159,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 3.  Ownership check (VERY IMPORTANT)
-        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
-            throw new UnauthorizedException("You are not allowed to update this event");
-        }
+        validateOwnership(event, currentUser);
 
         // 4. Update fields (only if not null)
         if (request.title() != null) {
@@ -213,9 +222,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 3. Ownership check (VERY IMPORTANT)
-        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
-            throw new UnauthorizedException("You are not allowed to delete this event");
-        }
+        validateOwnership(event, currentUser);
 
         // 4. Delete event
         eventRepository.delete(event);
