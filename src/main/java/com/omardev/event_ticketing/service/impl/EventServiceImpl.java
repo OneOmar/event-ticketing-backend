@@ -5,6 +5,7 @@ import com.omardev.event_ticketing.dto.response.EventResponse;
 import com.omardev.event_ticketing.entity.Event;
 import com.omardev.event_ticketing.entity.User;
 import com.omardev.event_ticketing.enums.EventStatus;
+import com.omardev.event_ticketing.exception.EventNotFoundException;
 import com.omardev.event_ticketing.exception.UserNotFoundException;
 import com.omardev.event_ticketing.mapper.EventMapper;
 import com.omardev.event_ticketing.repository.EventRepository;
@@ -17,6 +18,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 
 @Service
@@ -62,6 +65,18 @@ public class EventServiceImpl implements EventService {
         return events.map(eventMapper::toResponse);
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public EventResponse getEventById(UUID eventId) {
+
+        // 1. Fetch event from DB
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 2. Map Entity → DTO
+        return eventMapper.toResponse(event);
+    }
 
     @Override
     @Transactional

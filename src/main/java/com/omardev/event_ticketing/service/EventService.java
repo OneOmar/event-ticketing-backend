@@ -6,6 +6,8 @@ import com.omardev.event_ticketing.enums.EventStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 
 public interface EventService {
 
@@ -19,6 +21,10 @@ public interface EventService {
      */
     Page<EventResponse> getAllEvents(Pageable pageable);
 
+    /**
+     * Retrieve event by its ID.
+     */
+    EventResponse getEventById(UUID eventId);
 
     /**
      * Retrieve authenticated user's events with pagination and optional filtering.

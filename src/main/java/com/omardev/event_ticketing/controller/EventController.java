@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/events")
@@ -41,6 +42,22 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
+
+    /**
+     * Get event details by ID.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<EventResponse> getEventById(
+            @PathVariable UUID id
+    ) {
+
+        // Call service
+        EventResponse response = eventService.getEventById(id);
+
+        // Return 200 OK
+        return ResponseEntity.ok(response);
+    }
+    
 
     /**
      * Get authenticated user's events with pagination and optional status filter.
