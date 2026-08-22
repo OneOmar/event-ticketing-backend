@@ -2,6 +2,7 @@ package com.omardev.event_ticketing.controller;
 
 import com.omardev.event_ticketing.dto.request.CreateEventRequest;
 import com.omardev.event_ticketing.dto.response.EventResponse;
+import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,13 +43,21 @@ public class EventController {
 
 
     /**
-     * Get events created by the authenticated user.
+     * Get authenticated user's events with pagination and optional status filter.
      */
     @GetMapping("/me")
-    public ResponseEntity<List<EventResponse>> getMyEvents() {
+    public ResponseEntity<Page<EventResponse>> getMyEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) EventStatus status // optional filter
+    ) {
 
-        // Call service to get user's events
-        List<EventResponse> response = eventService.getMyEvents();
+        // Build pagination object
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Call service
+        Page<EventResponse> response =
+                eventService.getMyEvents(pageable, status);
 
         // Return 200 OK
         return ResponseEntity.ok(response);

@@ -3,12 +3,10 @@ package com.omardev.event_ticketing.service.impl;
 import com.omardev.event_ticketing.dto.request.CreateEventRequest;
 import com.omardev.event_ticketing.dto.response.EventResponse;
 import com.omardev.event_ticketing.entity.Event;
-import com.omardev.event_ticketing.entity.TicketType;
 import com.omardev.event_ticketing.entity.User;
 import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.exception.UserNotFoundException;
 import com.omardev.event_ticketing.mapper.EventMapper;
-import com.omardev.event_ticketing.mapper.TicketTypeMapper;
 import com.omardev.event_ticketing.repository.EventRepository;
 import com.omardev.event_ticketing.repository.UserRepository;
 import com.omardev.event_ticketing.service.EventService;
@@ -20,8 +18,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -30,23 +26,51 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
-    private final TicketTypeMapper ticketTypeMapper;
 
-    @Override
-    public EventResponse createEvent(CreateEventRequest request) {
-
-        // 1. Get authenticated user
+    /**
+     * Get the current authenticated user's Keycloak ID.
+     */
+    private String getCurrentUserKeycloakId() {
         Jwt jwt = (Jwt) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
+        return jwt.getSubject();
+    }
 
-        String keycloakId = jwt.getSubject();
-
-        User organizer = userRepository.findByKeycloakId(keycloakId)
+    /**
+     * Get the current authenticated user from DB.
+     */
+    private User getCurrentUser() {
+        String keycloakId = getCurrentUserKeycloakId();
+        return userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new UserNotFoundException(keycloakId));
+    }
 
-        // 2. Map request → Event
+
+    /**
+     * Fetch all events with pagination.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EventResponse> getAllEvents(Pageable pageable) {
+
+        // 1. Fetch events from database
+        Page<Event> events = eventRepository.findAll(pageable);
+
+        // 2. Map entities → DTOs
+        return events.map(eventMapper::toResponse);
+    }
+
+
+    @Override
+    @Transactional
+    public EventResponse createEvent(CreateEventRequest request) {
+
+        // 1. Get current user
+        User organizer = getCurrentUser();
+
+        // 2. Map request → entity
         Event event = eventMapper.toEntity(request);
 
         // 3. Set business fields
@@ -54,56 +78,26 @@ public class EventServiceImpl implements EventService {
         event.setStatus(EventStatus.DRAFT);
         event.setAvailableTickets(event.getCapacity());
 
-        // 4. Handle TicketTypes (relation only)
+        // 4. Link TicketTypes
         if (event.getTicketTypes() != null) {
-            event.getTicketTypes()
-                    .forEach(tt -> tt.setEvent(event));
+            event.getTicketTypes().forEach(tt -> tt.setEvent(event));
         }
 
-        // 5. Save
-        Event savedEvent = eventRepository.save(event);
-
-        // 6. Map to response
-        return eventMapper.toResponse(savedEvent);
+        // 5. Save + return DTO
+        return eventMapper.toResponse(eventRepository.save(event));
     }
 
 
-    /**
-     * Fetch paginated events and map them to DTOs.
-     */
+    @Override
     @Transactional(readOnly = true)
-    @Override
-    public Page<EventResponse> getAllEvents(Pageable pageable) {
+    public Page<EventResponse> getMyEvents(Pageable pageable, EventStatus status) {
 
-        // Retrieve events from database
-        Page<Event> events = eventRepository.findAll(pageable);
+        User user = getCurrentUser();
 
-        // Convert entities → DTOs
+        Page<Event> events = (status != null)
+                ? eventRepository.findByOrganizer_IdAndStatus(user.getId(), status, pageable)
+                : eventRepository.findByOrganizer_Id(user.getId(), pageable);
+
         return events.map(eventMapper::toResponse);
-    }
-
-    @Override
-    public List<EventResponse> getMyEvents() {
-
-        // 1. Get current authenticated user (JWT)
-        Jwt jwt = (Jwt) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
-        // Extract Keycloak user ID
-        String keycloakId = jwt.getSubject();
-
-        // 2. Find user in database
-        User user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new UserNotFoundException(keycloakId));
-
-        // 3. Fetch events by organizer ID (optimized query)
-        List<Event> events = eventRepository.findByOrganizer_Id(user.getId());
-
-        // 4. Map entities → DTOs
-        return events.stream()
-                .map(eventMapper::toResponse)
-                .toList();
     }
 }
