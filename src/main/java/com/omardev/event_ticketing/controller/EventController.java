@@ -24,25 +24,46 @@ public class EventController {
 
     private final EventService eventService;
 
+//    /**
+//     * Get all events with pagination.
+//     */
+//    @GetMapping
+//    public ResponseEntity<Page<EventResponse>> getAllEvents(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size
+//    ) {
+//
+//        // Build pagination object
+//        Pageable pageable = PageRequest.of(page, size);
+//
+//        // Delegate to service layer
+//        Page<EventResponse> response = eventService.getAllEvents(pageable);
+//
+//        // Return 200 OK with paginated result
+//        return ResponseEntity.ok(response);
+//    }
+
+
     /**
-     * Get all events with pagination.
+     * Get published events with optional search.
      */
     @GetMapping
-    public ResponseEntity<Page<EventResponse>> getAllEvents(
+    public ResponseEntity<Page<EventResponse>> getPublishedEvents(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword
     ) {
 
-        // Build pagination object
+        // Build pagination
         Pageable pageable = PageRequest.of(page, size);
 
-        // Delegate to service layer
-        Page<EventResponse> response = eventService.getAllEvents(pageable);
+        // Call service
+        Page<EventResponse> response =
+                eventService.getPublishedEvents(pageable, keyword);
 
-        // Return 200 OK with paginated result
+        // Return 200 OK
         return ResponseEntity.ok(response);
     }
-
 
     /**
      * Get event details by ID.

@@ -69,6 +69,32 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<EventResponse> getPublishedEvents(
+            Pageable pageable,
+            String keyword
+    ) {
+
+        Page<Event> events;
+
+        // 1. If a keyword is provided → search
+        if (keyword != null && !keyword.isBlank()) {
+
+            events = eventRepository.searchPublishedEvents(keyword, pageable);
+
+        } else {
+            // 2. Otherwise → get all published events
+            events = eventRepository.findByStatus(
+                    EventStatus.PUBLISHED,
+                    pageable
+            );
+        }
+
+        // 3. Map Entity → DTO
+        return events.map(eventMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public EventResponse getEventById(UUID eventId) {
 
         // 1. Fetch event from DB

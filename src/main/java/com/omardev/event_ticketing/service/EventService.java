@@ -18,6 +18,14 @@ public interface EventService {
     Page<EventResponse> getAllEvents(Pageable pageable);
 
     /**
+     * Retrieve published events with optional search.
+     */
+    Page<EventResponse> getPublishedEvents(
+            Pageable pageable,
+            String keyword
+    );
+
+    /**
      * Retrieve event by its ID.
      */
     EventResponse getEventById(UUID eventId);
