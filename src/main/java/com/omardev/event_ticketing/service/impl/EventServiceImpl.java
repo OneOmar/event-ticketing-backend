@@ -36,10 +36,16 @@ public class EventServiceImpl implements EventService {
      * Get the current authenticated user's Keycloak ID.
      */
     private String getCurrentUserKeycloakId() {
-        Jwt jwt = (Jwt) SecurityContextHolder
+
+        var authentication = SecurityContextHolder
                 .getContext()
-                .getAuthentication()
-                .getPrincipal();
+                .getAuthentication();
+
+        // Ensure authentication exists and is valid
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            throw new RuntimeException("Invalid authentication context");
+        }
+
         return jwt.getSubject();
     }
 
