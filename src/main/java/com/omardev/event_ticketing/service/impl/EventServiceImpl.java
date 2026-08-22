@@ -1,6 +1,7 @@
 package com.omardev.event_ticketing.service.impl;
 
 import com.omardev.event_ticketing.dto.request.CreateEventRequest;
+import com.omardev.event_ticketing.dto.request.UpdateEventRequest;
 import com.omardev.event_ticketing.dto.response.EventResponse;
 import com.omardev.event_ticketing.entity.Event;
 import com.omardev.event_ticketing.entity.User;
@@ -102,6 +103,57 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toResponse(eventRepository.save(event));
     }
 
+    @Override
+    @Transactional
+    public EventResponse updateEvent(UUID eventId, UpdateEventRequest request) {
+
+        // 1. Get current user
+        User currentUser = getCurrentUser();
+
+        // 2. Fetch event
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 3.  Ownership check (VERY IMPORTANT)
+        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not allowed to update this event");
+        }
+
+        // 4. Update fields (only if not null)
+        if (request.title() != null) {
+            event.setTitle(request.title());
+        }
+
+        if (request.description() != null) {
+            event.setDescription(request.description());
+        }
+
+        if (request.location() != null) {
+            event.setLocation(request.location());
+        }
+
+        if (request.bannerUrl() != null) {
+            event.setBannerUrl(request.bannerUrl());
+        }
+
+        if (request.startDate() != null) {
+            event.setStartDate(request.startDate());
+        }
+
+        if (request.endDate() != null) {
+            event.setEndDate(request.endDate());
+        }
+
+        if (request.capacity() != null) {
+            event.setCapacity(request.capacity());
+        }
+
+        // 5. Save updated event
+        Event updatedEvent = eventRepository.save(event);
+
+        // 6. Return DTO
+        return eventMapper.toResponse(updatedEvent);
+    }
 
     @Override
     @Transactional(readOnly = true)

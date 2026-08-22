@@ -1,6 +1,7 @@
 package com.omardev.event_ticketing.service;
 
 import com.omardev.event_ticketing.dto.request.CreateEventRequest;
+import com.omardev.event_ticketing.dto.request.UpdateEventRequest;
 import com.omardev.event_ticketing.dto.response.EventResponse;
 import com.omardev.event_ticketing.enums.EventStatus;
 import org.springframework.data.domain.Page;
@@ -10,11 +11,6 @@ import java.util.UUID;
 
 
 public interface EventService {
-
-    /**
-     * Create a new event.
-     */
-    EventResponse createEvent(CreateEventRequest request);
 
     /**
      * Retrieve all events with pagination.
@@ -33,4 +29,15 @@ public interface EventService {
             Pageable pageable,
             EventStatus status
     );
+
+    /**
+     * Create a new event.
+     */
+    EventResponse createEvent(CreateEventRequest request);
+
+    /**
+     * Update an existing event.
+     */
+    EventResponse updateEvent(UUID eventId, UpdateEventRequest request);
+
 }

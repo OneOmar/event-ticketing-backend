@@ -1,6 +1,7 @@
 package com.omardev.event_ticketing.controller;
 
 import com.omardev.event_ticketing.dto.request.CreateEventRequest;
+import com.omardev.event_ticketing.dto.request.UpdateEventRequest;
 import com.omardev.event_ticketing.dto.response.EventResponse;
 import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.service.EventService;
@@ -57,7 +58,7 @@ public class EventController {
         // Return 200 OK
         return ResponseEntity.ok(response);
     }
-    
+
 
     /**
      * Get authenticated user's events with pagination and optional status filter.
@@ -94,5 +95,19 @@ public class EventController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    /**
+     * Update event by ID.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<EventResponse> updateEvent(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateEventRequest request
+    ) {
+        
+        EventResponse response = eventService.updateEvent(id, request);
+
+        return ResponseEntity.ok(response);
     }
 }
