@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
@@ -35,6 +37,20 @@ public class EventController {
         Page<EventResponse> response = eventService.getAllEvents(pageable);
 
         // Return 200 OK with paginated result
+        return ResponseEntity.ok(response);
+    }
+
+
+    /**
+     * Get events created by the authenticated user.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<List<EventResponse>> getMyEvents() {
+
+        // Call service to get user's events
+        List<EventResponse> response = eventService.getMyEvents();
+
+        // Return 200 OK
         return ResponseEntity.ok(response);
     }
 
