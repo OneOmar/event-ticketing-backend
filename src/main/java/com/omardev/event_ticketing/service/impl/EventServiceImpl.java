@@ -20,6 +20,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -78,5 +80,30 @@ public class EventServiceImpl implements EventService {
 
         // Convert entities → DTOs
         return events.map(eventMapper::toResponse);
+    }
+
+    @Override
+    public List<EventResponse> getMyEvents() {
+
+        // 1. Get current authenticated user (JWT)
+        Jwt jwt = (Jwt) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        // Extract Keycloak user ID
+        String keycloakId = jwt.getSubject();
+
+        // 2. Find user in database
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new UserNotFoundException(keycloakId));
+
+        // 3. Fetch events by organizer ID (optimized query)
+        List<Event> events = eventRepository.findByOrganizer_Id(user.getId());
+
+        // 4. Map entities → DTOs
+        return events.stream()
+                .map(eventMapper::toResponse)
+                .toList();
     }
 }
