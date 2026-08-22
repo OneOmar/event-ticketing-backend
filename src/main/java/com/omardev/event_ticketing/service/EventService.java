@@ -20,4 +20,10 @@ public interface EventService {
      * Retrieve all events with pagination.
      */
     Page<EventResponse> getAllEvents(Pageable pageable);
+
+    /**
+     * Retrieve events created by the authenticated user.
+     */
+    List<EventResponse> getMyEvents();
+
 }
