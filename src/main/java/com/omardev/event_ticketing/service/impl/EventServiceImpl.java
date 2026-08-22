@@ -7,6 +7,7 @@ import com.omardev.event_ticketing.entity.Event;
 import com.omardev.event_ticketing.entity.User;
 import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.exception.EventNotFoundException;
+import com.omardev.event_ticketing.exception.UnauthorizedException;
 import com.omardev.event_ticketing.exception.UserNotFoundException;
 import com.omardev.event_ticketing.mapper.EventMapper;
 import com.omardev.event_ticketing.repository.EventRepository;
@@ -142,7 +143,7 @@ public class EventServiceImpl implements EventService {
 
         // 3.  Ownership check (VERY IMPORTANT)
         if (!event.getOrganizer().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("You are not allowed to update this event");
+            throw new UnauthorizedException("You are not allowed to update this event");
         }
 
         // 4. Update fields (only if not null)
@@ -207,7 +208,7 @@ public class EventServiceImpl implements EventService {
 
         // 3. Ownership check (VERY IMPORTANT)
         if (!event.getOrganizer().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("You are not allowed to delete this event");
+            throw new UnauthorizedException("You are not allowed to delete this event");
         }
 
         // 4. Delete event
