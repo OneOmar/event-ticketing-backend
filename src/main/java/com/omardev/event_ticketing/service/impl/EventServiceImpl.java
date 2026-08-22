@@ -7,6 +7,7 @@ import com.omardev.event_ticketing.entity.Event;
 import com.omardev.event_ticketing.entity.User;
 import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.exception.EventNotFoundException;
+import com.omardev.event_ticketing.exception.InvalidEventDatesException;
 import com.omardev.event_ticketing.exception.UnauthorizedException;
 import com.omardev.event_ticketing.exception.UserNotFoundException;
 import com.omardev.event_ticketing.mapper.EventMapper;
@@ -21,6 +22,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -112,6 +114,27 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toResponse(event);
     }
 
+    /**
+     * Ensure the endDate is after startDate.
+     */
+    private void validateDates(LocalDateTime startDate, LocalDateTime endDate) {
+
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new InvalidEventDatesException();
+        }
+    }
+
+    /**
+     * Ensure the current user is the owner of the event.
+     */
+    private void validateOwnership(Event event, User currentUser) {
+
+        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not allowed to modify this event");
+        }
+    }
+
+
     @Override
     @Transactional
     public EventResponse createEvent(CreateEventRequest request) {
@@ -122,29 +145,21 @@ public class EventServiceImpl implements EventService {
         // 2. Map request → entity
         Event event = eventMapper.toEntity(request);
 
-        // 3. Set business fields
+        // 3. Validate dates (IMPORTANT)
+        validateDates(event.getStartDate(), event.getEndDate());
+
+        // 4. Set business fields
         event.setOrganizer(organizer);
         event.setStatus(EventStatus.DRAFT);
         event.setAvailableTickets(event.getCapacity());
 
-        // 4. Link TicketTypes
+        // 5. Link TicketTypes
         if (event.getTicketTypes() != null) {
             event.getTicketTypes().forEach(tt -> tt.setEvent(event));
         }
 
-        // 5. Save + return DTO
+        // 6. Save + return DTO
         return eventMapper.toResponse(eventRepository.save(event));
-    }
-
-
-    /**
-     * Ensure the current user is the owner of the event.
-     */
-    private void validateOwnership(Event event, User currentUser) {
-
-        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
-            throw new UnauthorizedException("You are not allowed to modify this event");
-        }
     }
 
     @Override
@@ -190,10 +205,13 @@ public class EventServiceImpl implements EventService {
             event.setCapacity(request.capacity());
         }
 
-        // 5. Save updated event
+        // 5. Validate AFTER all updates
+        validateDates(event.getStartDate(), event.getEndDate());
+
+        // 6. Save updated event
         Event updatedEvent = eventRepository.save(event);
 
-        // 6. Return DTO
+        // 7. Return DTO
         return eventMapper.toResponse(updatedEvent);
     }
 
