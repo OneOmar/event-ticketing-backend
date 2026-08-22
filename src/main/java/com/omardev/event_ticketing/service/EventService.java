@@ -40,4 +40,8 @@ public interface EventService {
      */
     EventResponse updateEvent(UUID eventId, UpdateEventRequest request);
 
+    /**
+     * Delete an event by ID.
+     */
+    void deleteEvent(UUID eventId);
 }

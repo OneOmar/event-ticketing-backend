@@ -167,4 +167,24 @@ public class EventServiceImpl implements EventService {
 
         return events.map(eventMapper::toResponse);
     }
+
+    @Override
+    @Transactional
+    public void deleteEvent(UUID eventId) {
+
+        // 1. Get a current authenticated user
+        User currentUser = getCurrentUser();
+
+        // 2. Fetch event from DB
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 3. Ownership check (VERY IMPORTANT)
+        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not allowed to delete this event");
+        }
+
+        // 4. Delete event
+        eventRepository.delete(event);
+    }
 }

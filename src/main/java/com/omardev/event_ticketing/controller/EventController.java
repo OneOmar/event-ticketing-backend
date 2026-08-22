@@ -105,9 +105,22 @@ public class EventController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateEventRequest request
     ) {
-        
+
         EventResponse response = eventService.updateEvent(id, request);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Delete event by ID.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEvent(@PathVariable UUID id) {
+
+        // Call service
+        eventService.deleteEvent(id);
+
+        // Return 204 No Content (standard for delete)
+        return ResponseEntity.noContent().build();
     }
 }
