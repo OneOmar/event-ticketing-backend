@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -54,8 +55,13 @@ public class EventController {
             @RequestParam(required = false) String keyword
     ) {
 
-        // Build pagination
-        Pageable pageable = PageRequest.of(page, size);
+        // Build pagination with default sorting.
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+
 
         // Call service
         Page<EventResponse> response =
