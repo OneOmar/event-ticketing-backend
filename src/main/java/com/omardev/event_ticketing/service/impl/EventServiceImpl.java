@@ -214,17 +214,17 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public void deleteEvent(UUID eventId) {
 
-        // 1. Get a current authenticated user
+        // 1. Get current user
         User currentUser = getCurrentUser();
 
-        // 2. Fetch event from DB
+        // 2. Fetch event
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
-        // 3. Ownership check (VERY IMPORTANT)
+        // 3. Ownership check
         validateOwnership(event, currentUser);
 
-        // 4. Delete event
-        eventRepository.delete(event);
+        // 4. Delete it by ID
+        eventRepository.deleteById(eventId);
     }
 }
