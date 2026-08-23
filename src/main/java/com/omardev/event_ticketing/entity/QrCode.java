@@ -18,7 +18,6 @@ import java.util.UUID;
 public class QrCode {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     /*
@@ -72,13 +71,14 @@ public class QrCode {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) return true;
+        if (!(o instanceof QrCode)) return false;
         QrCode qrCode = (QrCode) o;
-        return Objects.equals(id, qrCode.id) && Objects.equals(code, qrCode.code) && status == qrCode.status && Objects.equals(expiresAt, qrCode.expiresAt) && Objects.equals(usedAt, qrCode.usedAt) && Objects.equals(createdAt, qrCode.createdAt) && Objects.equals(updatedAt, qrCode.updatedAt);
+        return Objects.equals(id, qrCode.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, code, status, expiresAt, usedAt, createdAt, updatedAt);
+        return Objects.hash(id);
     }
 }
