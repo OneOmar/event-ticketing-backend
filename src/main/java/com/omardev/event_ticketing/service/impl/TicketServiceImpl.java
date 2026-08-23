@@ -7,7 +7,9 @@ import com.omardev.event_ticketing.entity.Ticket;
 import com.omardev.event_ticketing.entity.User;
 import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.enums.TicketStatus;
+import com.omardev.event_ticketing.exception.EventNotAvailableException;
 import com.omardev.event_ticketing.exception.EventNotFoundException;
+import com.omardev.event_ticketing.exception.NoTicketsAvailableException;
 import com.omardev.event_ticketing.exception.UserNotFoundException;
 import com.omardev.event_ticketing.repository.EventRepository;
 import com.omardev.event_ticketing.repository.TicketRepository;
@@ -52,12 +54,13 @@ public class TicketServiceImpl implements TicketService {
 
         // Event not published
         if (event.getStatus() != EventStatus.PUBLISHED) {
-            throw new RuntimeException("Event is not available for ticket purchase");
+            throw new EventNotAvailableException(eventId);
+
         }
 
         // No tickets left
         if (event.getAvailableTickets() <= 0) {
-            throw new RuntimeException("No tickets available for this event");
+            throw new NoTicketsAvailableException(eventId);
         }
 
         // Ensure ticket type exists (TEMP logic)
