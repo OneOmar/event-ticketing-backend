@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -112,6 +113,7 @@ public class EventController {
     /**
      * Create a new event
      */
+    @PreAuthorize("hasRole('ORGANIZER')")
     @PostMapping
     public ResponseEntity<EventResponse> createEvent(
             @Valid @RequestBody CreateEventRequest request
@@ -127,6 +129,7 @@ public class EventController {
     /**
      * Update event by ID.
      */
+    @PreAuthorize("hasRole('ORGANIZER')")
     @PutMapping("/{id}")
     public ResponseEntity<EventResponse> updateEvent(
             @PathVariable UUID id,
@@ -141,6 +144,7 @@ public class EventController {
     /**
      * Delete event by ID.
      */
+    @PreAuthorize("hasRole('ORGANIZER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEvent(@PathVariable UUID id) {
 
