@@ -5,6 +5,7 @@ import com.omardev.event_ticketing.entity.Event;
 import com.omardev.event_ticketing.entity.QrCode;
 import com.omardev.event_ticketing.entity.Ticket;
 import com.omardev.event_ticketing.entity.User;
+import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.enums.TicketStatus;
 import com.omardev.event_ticketing.exception.EventNotFoundException;
 import com.omardev.event_ticketing.exception.UserNotFoundException;
@@ -47,30 +48,46 @@ public class TicketServiceImpl implements TicketService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
-        // 3. Create ticket
+        // 3. VALIDATION (VERY IMPORTANT)
+
+        // Event not published
+        if (event.getStatus() != EventStatus.PUBLISHED) {
+            throw new RuntimeException("Event is not available for ticket purchase");
+        }
+
+        // No tickets left
+        if (event.getAvailableTickets() <= 0) {
+            throw new RuntimeException("No tickets available for this event");
+        }
+
+        // Ensure ticket type exists (TEMP logic)
+        if (event.getTicketTypes().isEmpty()) {
+            throw new RuntimeException("No ticket types defined for this event");
+        }
+
+        // 4. Decrease available tickets
+        event.setAvailableTickets(event.getAvailableTickets() - 1);
+
+        // 5. Create ticket
         Ticket ticket = Ticket.builder()
                 .event(event)
                 .owner(user)
-
-                .ticketCode("TCK-" + UUID.randomUUID().toString().substring(0, 8))
+                .ticketCode("TCK-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10))
                 .status(TicketStatus.ACTIVE)
-
-                // TEMP (we fix later)
-                .ticketType(event.getTicketTypes().getFirst())
-
+                .ticketType(event.getTicketTypes().get(0)) // temp
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // 4. Save ticket first (needed for relation)
+        // 6. Save ticket first (needed for relation)
         Ticket savedTicket = ticketRepository.save(ticket);
 
-        // 5. Generate QR code for this ticket
+        // 7. Generate QR code for this ticket
         QrCode qrCode = qrCodeService.generateForTicket(savedTicket);
 
-        // 6. Save QR code
+        // 8. Save QR code
         qrCodeRepository.save(qrCode);
 
-        // 7. Build response
+        // 9. Build response
         return new TicketResponse(
                 savedTicket.getId(),
                 event.getId(),
