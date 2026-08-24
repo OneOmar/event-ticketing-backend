@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +20,7 @@ public class TicketController {
     /**
      * Purchase a ticket (by event + ticket type).
      */
+    @PreAuthorize("hasRole('ATTENDEE')")
     @PostMapping("/purchase")
     public ResponseEntity<TicketResponse> purchaseTicket(
             @Valid @RequestBody PurchaseTicketRequest request
