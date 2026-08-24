@@ -1,6 +1,7 @@
 package com.omardev.event_ticketing.exception;
 
 import com.omardev.event_ticketing.dto.response.ErrorResponse;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,20 +14,11 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     /**
-     * Handles all custom business exceptions (ApiException)
-     * and returns a standardized error response (HTTP 400).
+     * Handle all business exceptions (ApiException)
      */
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex) {
-
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity.badRequest().body(response);
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), List.of());
     }
 
     /**
@@ -40,53 +32,47 @@ public class GlobalExceptionHandler {
         List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(error -> error.getDefaultMessage())
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
                 .toList();
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation failed",
-                errors,
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity.badRequest().body(response);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
     }
 
     /**
-     * Handle generic runtime exceptions
+     * Handle NOT FOUND exceptions
      */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
-            RuntimeException ex
-    ) {
-
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity.badRequest().body(response);
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(EventNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), List.of());
     }
 
     /**
      * Fallback for unexpected errors
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(
-            Exception ex
-    ) {
-
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 "Something went wrong",
-                List.of(),
-                LocalDateTime.now()
+                List.of()
         );
+    }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(response);
+    /**
+     * Build a consistent error response
+     */
+    private ResponseEntity<ErrorResponse> buildResponse(
+            HttpStatus status,
+            String message,
+            List<String> errors
+    ) {
+        return ResponseEntity.status(status).body(
+                new ErrorResponse(
+                        status.value(),
+                        message,
+                        errors,
+                        LocalDateTime.now()
+                )
+        );
     }
 }
