@@ -1,13 +1,13 @@
 package com.omardev.event_ticketing.controller;
 
+import com.omardev.event_ticketing.dto.request.PurchaseTicketRequest;
 import com.omardev.event_ticketing.dto.response.TicketResponse;
 import com.omardev.event_ticketing.service.TicketService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tickets")
@@ -17,15 +17,15 @@ public class TicketController {
     private final TicketService ticketService;
 
     /**
-     * Purchase a ticket for an event.
+     * Purchase a ticket (by event + ticket type).
      */
-    @PostMapping("/purchase/{eventId}")
+    @PostMapping("/purchase")
     public ResponseEntity<TicketResponse> purchaseTicket(
-            @PathVariable UUID eventId
+            @Valid @RequestBody PurchaseTicketRequest request
     ) {
 
-        // Call service layer
-        TicketResponse response = ticketService.purchaseTicket(eventId);
+        // Delegate to service
+        TicketResponse response = ticketService.purchaseTicket(request);
 
         // Return 201 CREATED
         return ResponseEntity
