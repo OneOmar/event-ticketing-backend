@@ -41,7 +41,12 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new EventNotFoundException(request.eventId()));
 
         // 3. Fetch ticket type
-        TicketType ticketType = ticketTypeRepository.findById(request.ticketTypeId())
+        // TicketType ticketType = ticketTypeRepository.findById(request.ticketTypeId())
+        //      .orElseThrow(() -> new TicketTypeNotFoundException(request.ticketTypeId()));
+
+        // 3. Get ticket type WITH LOCK (prevents concurrent updates)
+        TicketType ticketType = ticketTypeRepository
+                .findByIdForUpdate(request.ticketTypeId())
                 .orElseThrow(() -> new TicketTypeNotFoundException(request.ticketTypeId()));
 
         // 4. Validate event is purchasable
