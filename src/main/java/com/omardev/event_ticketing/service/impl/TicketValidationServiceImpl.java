@@ -11,6 +11,7 @@ import com.omardev.event_ticketing.exception.ApiException;
 import com.omardev.event_ticketing.repository.QrCodeRepository;
 import com.omardev.event_ticketing.repository.TicketValidationRepository;
 import com.omardev.event_ticketing.service.TicketValidationService;
+import com.omardev.event_ticketing.util.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class TicketValidationServiceImpl implements TicketValidationService {
 
+    private final CurrentUserProvider currentUserProvider;
     private final TicketValidationRepository ticketValidationRepository;
     private final QrCodeRepository qrCodeRepository;
 
@@ -95,7 +97,7 @@ public class TicketValidationServiceImpl implements TicketValidationService {
     }
 
     /**
-     * Save validation history (SUCCESS or FAILED)
+     * Save ticket validation history (SUCCESS or FAILED)
      */
     private void saveValidation(
             QrCode qrCode,
@@ -107,8 +109,9 @@ public class TicketValidationServiceImpl implements TicketValidationService {
                 .ticket(qrCode.getTicket())
                 .status(status)
                 .method(TicketValidationMethod.QR_SCAN)
+                .validatedBy(currentUserProvider.getCurrentUser())
                 .notes(notes)
-                // validatedAt handled by @PrePersist
+                .validatedAt(LocalDateTime.now())
                 .build();
 
         ticketValidationRepository.save(validation);
