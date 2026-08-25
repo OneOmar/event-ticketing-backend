@@ -14,6 +14,7 @@ import com.omardev.event_ticketing.mapper.EventMapper;
 import com.omardev.event_ticketing.repository.EventRepository;
 import com.omardev.event_ticketing.repository.UserRepository;
 import com.omardev.event_ticketing.service.EventService;
+import com.omardev.event_ticketing.util.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,35 +32,8 @@ import java.util.UUID;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserProvider currentUserProvider;
     private final EventMapper eventMapper;
-
-    /**
-     * Get the current authenticated user's Keycloak ID.
-     */
-    private String getCurrentUserKeycloakId() {
-
-        var authentication = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
-
-        // Ensure authentication exists and is valid
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
-            throw new RuntimeException("Invalid authentication context");
-        }
-
-        return jwt.getSubject();
-    }
-
-    /**
-     * Get the current authenticated user from DB.
-     */
-    private User getCurrentUser() {
-        String keycloakId = getCurrentUserKeycloakId();
-        return userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new UserNotFoundException(keycloakId));
-    }
-
 
     /**
      * Fetch all events with pagination.
@@ -140,7 +114,7 @@ public class EventServiceImpl implements EventService {
     public EventResponse createEvent(CreateEventRequest request) {
 
         // 1. Get current user
-        User organizer = getCurrentUser();
+        User organizer = currentUserProvider.getCurrentUser();
 
         // 2. Map request → entity
         Event event = eventMapper.toEntity(request);
@@ -167,7 +141,7 @@ public class EventServiceImpl implements EventService {
     public EventResponse updateEvent(UUID eventId, UpdateEventRequest request) {
 
         // 1. Get current user
-        User currentUser = getCurrentUser();
+        User currentUser = currentUserProvider.getCurrentUser();
 
         // 2. Fetch event
         Event event = eventRepository.findById(eventId)
@@ -219,7 +193,7 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public Page<EventResponse> getMyEvents(Pageable pageable, EventStatus status) {
 
-        User user = getCurrentUser();
+        User user = currentUserProvider.getCurrentUser();
 
         Page<Event> events = (status != null)
                 ? eventRepository.findByOrganizer_IdAndStatus(user.getId(), status, pageable)
@@ -233,7 +207,7 @@ public class EventServiceImpl implements EventService {
     public void deleteEvent(UUID eventId) {
 
         // 1. Get current user
-        User currentUser = getCurrentUser();
+        User currentUser = currentUserProvider.getCurrentUser();
 
         // 2. Fetch event
         Event event = eventRepository.findById(eventId)
