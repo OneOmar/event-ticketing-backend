@@ -60,8 +60,21 @@ public class TicketValidationServiceImpl implements TicketValidationService {
             );
         }
 
-        // Next step will handle success case
+        // 5. Mark QR as used (state change)
+        qrCode.setUsedAt(LocalDateTime.now());
 
-        return null; // temporary
+        // Optional: update status
+        qrCode.setStatus(QrCodeStatus.USED);
+
+        // Save update
+        qrCodeRepository.save(qrCode);
+
+        // 6. Build SUCCESS response
+        return new ValidateTicketResponse(
+                true,
+                "Ticket is valid",
+                qrCode.getTicket().getTicketCode(),
+                qrCode.getTicket().getEvent().getTitle()
+        );
     }
 }
