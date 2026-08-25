@@ -9,6 +9,7 @@ import com.omardev.event_ticketing.exception.*;
 import com.omardev.event_ticketing.repository.*;
 import com.omardev.event_ticketing.service.QrCodeService;
 import com.omardev.event_ticketing.service.TicketService;
+import com.omardev.event_ticketing.util.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -27,14 +28,14 @@ public class TicketServiceImpl implements TicketService {
     private final TicketTypeRepository ticketTypeRepository;
     private final QrCodeRepository qrCodeRepository;
     private final QrCodeService qrCodeService;
-    private final UserRepository userRepository;
+    private final CurrentUserProvider currentUserProvider;
 
     @Override
     @Transactional
     public TicketResponse purchaseTicket(PurchaseTicketRequest request) {
 
-        // 1. Get current authenticated user
-        User user = getCurrentUser();
+        // 1. Get a current authenticated user
+        User user = currentUserProvider.getCurrentUser();
 
         // 2. Fetch event
         Event event = eventRepository.findById(request.eventId())
@@ -98,31 +99,5 @@ public class TicketServiceImpl implements TicketService {
                 qrCode.getCode(),
                 savedTicket.getCreatedAt()
         );
-    }
-
-    /**
-     * Get the current authenticated user's Keycloak ID.
-     */
-    private String getCurrentUserKeycloakId() {
-
-        var authentication = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
-
-        // Ensure authentication exists and is valid
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
-            throw new RuntimeException("Invalid authentication context");
-        }
-
-        return jwt.getSubject();
-    }
-
-    /**
-     * Get the current authenticated user from DB.
-     */
-    private User getCurrentUser() {
-        String keycloakId = getCurrentUserKeycloakId();
-        return userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new UserNotFoundException(keycloakId));
     }
 }
