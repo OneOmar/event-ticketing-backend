@@ -3,9 +3,13 @@ package com.omardev.event_ticketing.service.impl;
 import com.omardev.event_ticketing.dto.request.ValidateTicketRequest;
 import com.omardev.event_ticketing.dto.response.ValidateTicketResponse;
 import com.omardev.event_ticketing.entity.QrCode;
+import com.omardev.event_ticketing.entity.TicketValidation;
 import com.omardev.event_ticketing.enums.QrCodeStatus;
+import com.omardev.event_ticketing.enums.TicketValidationMethod;
+import com.omardev.event_ticketing.enums.TicketValidationStatus;
 import com.omardev.event_ticketing.exception.ApiException;
 import com.omardev.event_ticketing.repository.QrCodeRepository;
+import com.omardev.event_ticketing.repository.TicketValidationRepository;
 import com.omardev.event_ticketing.service.TicketValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class TicketValidationServiceImpl implements TicketValidationService {
 
+    private final TicketValidationRepository ticketValidationRepository;
     private final QrCodeRepository qrCodeRepository;
 
     @Override
@@ -30,6 +35,9 @@ public class TicketValidationServiceImpl implements TicketValidationService {
 
         // 2. Check QR status
         if (qrCode.getStatus() != QrCodeStatus.ACTIVE) {
+
+            saveValidation(qrCode, TicketValidationStatus.FAILED, "QR not active");
+
             return new ValidateTicketResponse(
                     false,
                     "QR code is not valid",
@@ -42,6 +50,8 @@ public class TicketValidationServiceImpl implements TicketValidationService {
         if (qrCode.getExpiresAt() != null &&
                 qrCode.getExpiresAt().isBefore(LocalDateTime.now())) {
 
+            saveValidation(qrCode, TicketValidationStatus.FAILED, "QR expired");
+
             return new ValidateTicketResponse(
                     false,
                     "QR code is expired",
@@ -52,6 +62,9 @@ public class TicketValidationServiceImpl implements TicketValidationService {
 
         // 4. Check if already used
         if (qrCode.getUsedAt() != null) {
+
+            saveValidation(qrCode, TicketValidationStatus.FAILED, "Ticket already used");
+
             return new ValidateTicketResponse(
                     false,
                     "Ticket already used",
@@ -69,6 +82,9 @@ public class TicketValidationServiceImpl implements TicketValidationService {
         // Save update
         qrCodeRepository.save(qrCode);
 
+        // Save validation success
+        saveValidation(qrCode, TicketValidationStatus.SUCCESS, "Ticket validated");
+
         // 6. Build SUCCESS response
         return new ValidateTicketResponse(
                 true,
@@ -76,5 +92,25 @@ public class TicketValidationServiceImpl implements TicketValidationService {
                 qrCode.getTicket().getTicketCode(),
                 qrCode.getTicket().getEvent().getTitle()
         );
+    }
+
+    /**
+     * Save validation history (SUCCESS or FAILED)
+     */
+    private void saveValidation(
+            QrCode qrCode,
+            TicketValidationStatus status,
+            String notes
+    ) {
+
+        TicketValidation validation = TicketValidation.builder()
+                .ticket(qrCode.getTicket())
+                .status(status)
+                .method(TicketValidationMethod.QR_SCAN)
+                .notes(notes)
+                // validatedAt handled by @PrePersist
+                .build();
+
+        ticketValidationRepository.save(validation);
     }
 }
