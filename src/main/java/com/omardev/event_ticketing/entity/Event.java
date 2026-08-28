@@ -89,7 +89,12 @@ public class Event {
     )
     private List<User> staffMembers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "event",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<TicketType> ticketTypes = new ArrayList<>();
 
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
