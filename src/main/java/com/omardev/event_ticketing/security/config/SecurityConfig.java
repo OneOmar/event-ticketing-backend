@@ -7,10 +7,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.Collection;
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -63,18 +68,26 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
 
-        // Extract roles from Keycloak JWT
-        JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 
-        // Add "ROLE_" prefix (VERY IMPORTANT)
-        converter.setAuthorityPrefix("ROLE_");
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
 
-        // Tell Spring where roles are in JWT
-        converter.setAuthoritiesClaimName("realm_access.roles");
+            // Extract "realm_access" from JWT
+            var realmAccess = jwt.getClaimAsMap("realm_access");
 
-        JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
-        jwtConverter.setJwtGrantedAuthoritiesConverter(converter);
+            // No roles → return empty list
+            if (realmAccess == null || realmAccess.get("roles") == null) {
+                return List.of();
+            }
 
-        return jwtConverter;
+            // Convert roles → ROLE_XXX (required by Spring Security)
+            Collection<String> roles = (Collection<String>) realmAccess.get("roles");
+
+            return roles.stream()
+                    .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
+                    .toList();
+        });
+
+        return converter;
     }
 }
