@@ -127,6 +127,20 @@ public class EventController {
     }
 
     /**
+     * Publish an event
+     */
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PatchMapping("/{id}/publish")
+    public ResponseEntity<EventResponse> publishEvent(
+            @PathVariable UUID id
+    ) {
+
+        EventResponse response = eventService.publishEvent(id);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Update event by ID.
      */
     @PreAuthorize("hasRole('ORGANIZER')")
