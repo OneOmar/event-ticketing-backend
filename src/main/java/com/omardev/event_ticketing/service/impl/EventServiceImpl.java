@@ -6,6 +6,7 @@ import com.omardev.event_ticketing.dto.response.EventResponse;
 import com.omardev.event_ticketing.entity.Event;
 import com.omardev.event_ticketing.entity.User;
 import com.omardev.event_ticketing.enums.EventStatus;
+import com.omardev.event_ticketing.exception.ApiException;
 import com.omardev.event_ticketing.exception.EventNotFoundException;
 import com.omardev.event_ticketing.exception.InvalidEventDatesException;
 import com.omardev.event_ticketing.exception.UnauthorizedException;
@@ -133,6 +134,47 @@ public class EventServiceImpl implements EventService {
 
         // 7. Return response
         return eventMapper.toResponse(savedEvent);
+    }
+
+    @Override
+    @Transactional
+    public EventResponse publishEvent(UUID eventId) {
+
+        // 1. Get current user
+        User currentUser = currentUserProvider.getCurrentUser();
+
+        // 2. Fetch event
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 3. Check ownership
+        validateOwnership(event, currentUser);
+
+        // 4. Business rules
+
+        // Already published
+        if (event.getStatus() == EventStatus.PUBLISHED) {
+            throw new ApiException("Event is already published");
+        }
+
+        // No ticket types
+        if (event.getTicketTypes() == null || event.getTicketTypes().isEmpty()) {
+            throw new ApiException("Event must have at least one ticket type");
+        }
+
+        // Invalid capacity
+        if (event.getCapacity() == null || event.getCapacity() <= 0) {
+            throw new ApiException("Event capacity must be greater than 0");
+        }
+
+        // 5. Publish
+        event.setStatus(EventStatus.PUBLISHED);
+
+        // 6. Save
+        Event updatedEvent = eventRepository.save(event);
+
+        // 7. Return response
+        return eventMapper.toResponse(updatedEvent);
     }
 
     @Override
