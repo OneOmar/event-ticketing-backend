@@ -18,6 +18,8 @@ public interface TicketTypeMapper {
      * Note: 'event' is ignored and will be set manually in the service layer.
      */
     @Mapping(target = "event", ignore = true)
+    @Mapping(target = "availableQuantity", source = "quantity")
+
     TicketType toEntity(CreateTicketTypeRequest request);
 
     /**
