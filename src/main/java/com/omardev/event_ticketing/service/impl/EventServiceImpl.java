@@ -9,17 +9,13 @@ import com.omardev.event_ticketing.enums.EventStatus;
 import com.omardev.event_ticketing.exception.EventNotFoundException;
 import com.omardev.event_ticketing.exception.InvalidEventDatesException;
 import com.omardev.event_ticketing.exception.UnauthorizedException;
-import com.omardev.event_ticketing.exception.UserNotFoundException;
 import com.omardev.event_ticketing.mapper.EventMapper;
 import com.omardev.event_ticketing.repository.EventRepository;
-import com.omardev.event_ticketing.repository.UserRepository;
 import com.omardev.event_ticketing.service.EventService;
 import com.omardev.event_ticketing.util.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,10 +112,10 @@ public class EventServiceImpl implements EventService {
         // 1. Get current user
         User organizer = currentUserProvider.getCurrentUser();
 
-        // 2. Map request → entity
+        // 2. Map request DTO → entity
         Event event = eventMapper.toEntity(request);
 
-        // 3. Validate dates (IMPORTANT)
+        // 3. Validate event dates
         validateDates(event.getStartDate(), event.getEndDate());
 
         // 4. Set business fields
@@ -127,13 +123,16 @@ public class EventServiceImpl implements EventService {
         event.setStatus(EventStatus.DRAFT);
         event.setAvailableTickets(event.getCapacity());
 
-        // 5. Link TicketTypes
+        // 5. Link TicketTypes to Event
         if (event.getTicketTypes() != null) {
             event.getTicketTypes().forEach(tt -> tt.setEvent(event));
         }
 
-        // 6. Save + return DTO
-        return eventMapper.toResponse(eventRepository.save(event));
+        // 6. Save
+        Event savedEvent = eventRepository.save(event);
+
+        // 7. Return response
+        return eventMapper.toResponse(savedEvent);
     }
 
     @Override
