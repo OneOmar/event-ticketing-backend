@@ -49,6 +49,11 @@ public interface EventService {
     EventResponse publishEvent(UUID eventId);
 
     /**
+     * Cancel (unpublish) an event
+     */
+    EventResponse cancelEvent(UUID eventId);
+
+    /**
      * Update an existing event.
      */
     EventResponse updateEvent(UUID eventId, UpdateEventRequest request);

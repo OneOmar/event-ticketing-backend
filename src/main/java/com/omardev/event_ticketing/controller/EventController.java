@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -136,6 +135,20 @@ public class EventController {
     ) {
 
         EventResponse response = eventService.publishEvent(id);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Cancel (unpublish) an event
+     */
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<EventResponse> cancelEvent(
+            @PathVariable UUID id
+    ) {
+
+        EventResponse response = eventService.cancelEvent(id);
 
         return ResponseEntity.ok(response);
     }

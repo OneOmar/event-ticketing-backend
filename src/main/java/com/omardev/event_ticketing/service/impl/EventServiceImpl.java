@@ -179,6 +179,32 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
+    public EventResponse cancelEvent(UUID eventId) {
+
+        // 1. Get current user
+        User currentUser = currentUserProvider.getCurrentUser();
+
+        // 2. Fetch event
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 3. Check ownership
+        validateOwnership(event, currentUser);
+
+        // 4. Validate status
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new ApiException("Event is already cancelled");
+        }
+
+        // 5. Update status
+        event.setStatus(EventStatus.CANCELLED);
+
+        // 6. Save + return
+        return eventMapper.toResponse(eventRepository.save(event));
+    }
+
+    @Override
+    @Transactional
     public EventResponse updateEvent(UUID eventId, UpdateEventRequest request) {
 
         // 1. Get current user
