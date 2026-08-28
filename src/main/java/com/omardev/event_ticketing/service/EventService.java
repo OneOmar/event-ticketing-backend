@@ -44,6 +44,11 @@ public interface EventService {
     EventResponse createEvent(CreateEventRequest request);
 
     /**
+     * Publish an event (DRAFT → PUBLISHED).
+     */
+    EventResponse publishEvent(UUID eventId);
+
+    /**
      * Update an existing event.
      */
     EventResponse updateEvent(UUID eventId, UpdateEventRequest request);
