@@ -22,7 +22,7 @@ public class TicketController {
     /**
      * Purchase tickets for an event.
      */
-    // @PreAuthorize("hasRole('ATTENDEE')")
+    @PreAuthorize("hasRole('ATTENDEE')")
     @PostMapping("/purchase")
     public ResponseEntity<List<TicketResponse>> purchaseTicket(
             @Valid @RequestBody PurchaseTicketRequest request
@@ -36,4 +36,19 @@ public class TicketController {
                 .status(HttpStatus.CREATED)
                 .body(responses);
     }
+
+    /**
+     * Retrieve all tickets for the current user.
+     */
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('ATTENDEE')")
+    public ResponseEntity<List<TicketResponse>> getMyTickets() {
+
+        // Call service to fetch user's tickets
+        List<TicketResponse> tickets = ticketService.getMyTickets();
+
+        // Return 200 OK with result
+        return ResponseEntity.ok(tickets);
+    }
+
 }
