@@ -49,6 +49,7 @@ public class Ticket {
             fetch = FetchType.LAZY,
             orphanRemoval = true
     )
+    @OrderBy("createdAt DESC")
     private List<QrCode> qrCodes = new ArrayList<>();
 
     /*

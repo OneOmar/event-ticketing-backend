@@ -107,4 +107,33 @@ public class TicketServiceImpl implements TicketService {
         // 11. Return all tickets
         return responses;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponse> getMyTickets() {
+
+        // 1. Get the current authenticated user
+        User user = currentUserProvider.getCurrentUser();
+
+        // 2. Fetch all tickets owned by the user
+        List<Ticket> tickets = ticketRepository.findByOwnerId(user.getId());
+
+        // 3. Map each Ticket → TicketResponse
+        return tickets.stream()
+                .map(ticket -> {
+
+                    // Extract first QR code if exists (safe)
+                    String qrCode = ticket.getQrCodes().isEmpty()
+                            ? null
+                            : ticket.getQrCodes().getFirst().getCode();
+
+                    return new TicketResponse(
+                            ticket.getId(),
+                            ticket.getEvent().getId(),
+                            qrCode,
+                            ticket.getCreatedAt()
+                    );
+                })
+                .toList();
+    }
 }

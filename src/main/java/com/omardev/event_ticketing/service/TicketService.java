@@ -10,8 +10,10 @@ public interface TicketService {
     /**
      * Purchase multiple tickets for an event.
      */
-
-    // TicketResponse purchaseTicket(PurchaseTicketRequest request);
-
     List<TicketResponse> purchaseTicket(PurchaseTicketRequest request);
+
+    /**
+     * Retrieve all tickets for the current user.
+     */
+    List<TicketResponse> getMyTickets();
 }
