@@ -11,12 +11,12 @@ import com.omardev.event_ticketing.service.QrCodeService;
 import com.omardev.event_ticketing.service.TicketService;
 import com.omardev.event_ticketing.util.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,30 +32,26 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
-    public TicketResponse purchaseTicket(PurchaseTicketRequest request) {
+    public List<TicketResponse> purchaseTicket(PurchaseTicketRequest request) {
 
-        // 1. Get a current authenticated user
+        // 1. Get the authenticated user
         User user = currentUserProvider.getCurrentUser();
 
         // 2. Fetch event
         Event event = eventRepository.findById(request.eventId())
                 .orElseThrow(() -> new EventNotFoundException(request.eventId()));
 
-        // 3. Fetch ticket type
-        // TicketType ticketType = ticketTypeRepository.findById(request.ticketTypeId())
-        //      .orElseThrow(() -> new TicketTypeNotFoundException(request.ticketTypeId()));
-
-        // 3. Get ticket type WITH LOCK (prevents concurrent updates)
+        // 3. Fetch ticket type with lock (prevents concurrent overselling)
         TicketType ticketType = ticketTypeRepository
                 .findByIdForUpdate(request.ticketTypeId())
                 .orElseThrow(() -> new TicketTypeNotFoundException(request.ticketTypeId()));
 
-        // 4. Validate event is purchasable
+        // 4. Validate event status
         if (event.getStatus() != EventStatus.PUBLISHED) {
             throw new ApiException("Event is not available for ticket purchase");
         }
 
-        // 5. Ensure the ticket type belongs to this event (security + consistency)
+        // 5. Ensure the ticket type belongs to an event
         if (!ticketType.getEvent().getId().equals(event.getId())) {
             throw new ApiException("Ticket type does not belong to this event");
         }
@@ -65,39 +61,50 @@ public class TicketServiceImpl implements TicketService {
             throw new ApiException("Ticket type is not active");
         }
 
-        // 7. Check availability for this specific ticket type
-        if (ticketType.getAvailableQuantity() <= 0) {
+        // 7. Check availability
+        if (ticketType.getAvailableQuantity() < request.quantity()) {
             throw new TicketTypeSoldOutException(ticketType.getId());
         }
 
-        // 8. Decrease available stock (managed by JPA transaction)
-        ticketType.setAvailableQuantity(ticketType.getAvailableQuantity() - 1);
-
-        // 9. Create ticket
-        Ticket ticket = Ticket.builder()
-                .event(event)
-                .owner(user)
-                .ticketType(ticketType)
-                .ticketCode("TCK-" + UUID.randomUUID().toString().substring(0, 8))
-                .status(TicketStatus.ACTIVE)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        // 10. Save ticket
-        Ticket savedTicket = ticketRepository.save(ticket);
-
-        // 11. Generate QR code for this ticket
-        QrCode qrCode = qrCodeService.generateForTicket(savedTicket);
-
-        // 12. Persist QR code
-        qrCodeRepository.save(qrCode);
-
-        // 13. Return response DTO
-        return new TicketResponse(
-                savedTicket.getId(),
-                event.getId(),
-                qrCode.getCode(),
-                savedTicket.getCreatedAt()
+        // 8. Decrease stock
+        ticketType.setAvailableQuantity(
+                ticketType.getAvailableQuantity() - request.quantity()
         );
+
+        // 9. Prepare a response list
+        List<TicketResponse> responses = new ArrayList<>();
+
+        // Use single timestamp for consistency
+        LocalDateTime now = LocalDateTime.now();
+
+        // 10. Create tickets
+        for (int i = 0; i < request.quantity(); i++) {
+
+            Ticket ticket = Ticket.builder()
+                    .event(event)
+                    .owner(user)
+                    .ticketType(ticketType)
+                    .ticketCode("TCK-" + UUID.randomUUID().toString().substring(0, 8))
+                    .status(TicketStatus.ACTIVE)
+                    .createdAt(now)
+                    .build();
+
+            Ticket savedTicket = ticketRepository.save(ticket);
+
+            // Generate QR code
+            QrCode qrCode = qrCodeService.generateForTicket(savedTicket);
+            qrCodeRepository.save(qrCode);
+
+            // Build response
+            responses.add(new TicketResponse(
+                    savedTicket.getId(),
+                    event.getId(),
+                    qrCode.getCode(),
+                    savedTicket.getCreatedAt()
+            ));
+        }
+
+        // 11. Return all tickets
+        return responses;
     }
 }
