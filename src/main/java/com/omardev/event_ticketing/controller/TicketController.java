@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/tickets")
 @RequiredArgsConstructor
@@ -18,20 +20,20 @@ public class TicketController {
     private final TicketService ticketService;
 
     /**
-     * Purchase a ticket (by event + ticket type).
+     * Purchase tickets for an event.
      */
-    @PreAuthorize("hasRole('ATTENDEE')")
+    // @PreAuthorize("hasRole('ATTENDEE')")
     @PostMapping("/purchase")
-    public ResponseEntity<TicketResponse> purchaseTicket(
+    public ResponseEntity<List<TicketResponse>> purchaseTicket(
             @Valid @RequestBody PurchaseTicketRequest request
     ) {
 
         // Delegate to service
-        TicketResponse response = ticketService.purchaseTicket(request);
+        List<TicketResponse> responses = ticketService.purchaseTicket(request);
 
         // Return 201 CREATED
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(responses);
     }
 }
