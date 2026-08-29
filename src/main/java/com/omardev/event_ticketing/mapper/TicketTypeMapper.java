@@ -19,6 +19,7 @@ public interface TicketTypeMapper {
      */
     @Mapping(target = "event", ignore = true)
     @Mapping(target = "availableQuantity", source = "quantity")
+    @Mapping(target = "active", constant = "true")
 
     TicketType toEntity(CreateTicketTypeRequest request);
 
