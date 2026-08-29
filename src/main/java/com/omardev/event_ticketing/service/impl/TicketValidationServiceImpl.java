@@ -28,45 +28,17 @@ public class TicketValidationServiceImpl implements TicketValidationService {
 
     @Override
     @Transactional
-    public ValidateTicketResponse validate(ValidateTicketRequest request) {
+    public ValidateTicketResponse validateTicket(ValidateTicketRequest request) {
 
-        // 1. Find QR code by value
+        // 1. Fetch QR with lock (avoid double scan)
         QrCode qrCode = qrCodeRepository
-                .findByCode(request.qrCode())
+                .findByCodeForUpdate(request.qrCode())
                 .orElseThrow(() -> new ApiException("QR code not found"));
 
-        // 2. Check QR status
-        if (qrCode.getStatus() != QrCodeStatus.ACTIVE) {
 
-            saveValidation(qrCode, TicketValidationStatus.FAILED, "QR not active");
-
-            return new ValidateTicketResponse(
-                    false,
-                    "QR code is not valid",
-                    null,
-                    null
-            );
-        }
-
-        // 3. Check expiration
-        if (qrCode.getExpiresAt() != null &&
-                qrCode.getExpiresAt().isBefore(LocalDateTime.now())) {
-
-            saveValidation(qrCode, TicketValidationStatus.FAILED, "QR expired");
-
-            return new ValidateTicketResponse(
-                    false,
-                    "QR code is expired",
-                    null,
-                    null
-            );
-        }
-
-        // 4. Check if already used
+        // 2. Check already used
         if (qrCode.getUsedAt() != null) {
-
-            saveValidation(qrCode, TicketValidationStatus.FAILED, "Ticket already used");
-
+            saveValidation(qrCode, TicketValidationStatus.FAILED, "Already used");
             return new ValidateTicketResponse(
                     false,
                     "Ticket already used",
@@ -75,22 +47,40 @@ public class TicketValidationServiceImpl implements TicketValidationService {
             );
         }
 
-        // 5. Mark QR as used (state change)
-        qrCode.setUsedAt(LocalDateTime.now());
+        // 3. Check status
+        if (qrCode.getStatus() != QrCodeStatus.ACTIVE) {
+            saveValidation(qrCode, TicketValidationStatus.FAILED, "QR not active");
+            return new ValidateTicketResponse(
+                    false,
+                    "QR code is not valid",
+                    null,
+                    null
+            );
+        }
 
-        // Optional: update status
+        // 4. Check expiration
+        if (qrCode.getExpiresAt() != null &&
+                qrCode.getExpiresAt().isBefore(LocalDateTime.now())) {
+
+            saveValidation(qrCode, TicketValidationStatus.FAILED, "QR expired");
+            return new ValidateTicketResponse(
+                    false,
+                    "QR code is expired",
+                    null,
+                    null
+            );
+        }
+
+        // 5. Mark as used
+        qrCode.setUsedAt(LocalDateTime.now());
         qrCode.setStatus(QrCodeStatus.USED);
 
-        // Save update
-        qrCodeRepository.save(qrCode);
+        // 6. Save validation
+        saveValidation(qrCode, TicketValidationStatus.SUCCESS, "Validated");
 
-        // Save validation success
-        saveValidation(qrCode, TicketValidationStatus.SUCCESS, "Ticket validated");
-
-        // 6. Build SUCCESS response
         return new ValidateTicketResponse(
                 true,
-                "Ticket is valid",
+                "Access granted",
                 qrCode.getTicket().getTicketCode(),
                 qrCode.getTicket().getEvent().getTitle()
         );
