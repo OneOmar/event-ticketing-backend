@@ -40,6 +40,13 @@ public class SecurityConfig {
                 // Route authorization
                 .authorizeHttpRequests(auth -> auth
 
+                        // Swagger
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
                         // Public endpoints
                         .requestMatchers("/api/public/**")
                         .permitAll()
