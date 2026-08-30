@@ -3,15 +3,20 @@ package com.omardev.event_ticketing.controller;
 import com.omardev.event_ticketing.dto.request.PurchaseTicketRequest;
 import com.omardev.event_ticketing.dto.response.TicketResponse;
 import com.omardev.event_ticketing.service.TicketService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Ticket management endpoints.
+ */
+@Tag(name = "Tickets", description = "Ticket purchase and user tickets")
 @RestController
 @RequestMapping("/api/v1/tickets")
 @RequiredArgsConstructor
@@ -22,33 +27,34 @@ public class TicketController {
     /**
      * Purchase tickets for an event.
      */
+    @Operation(
+            summary = "Purchase tickets",
+            description = "Requires role: ATTENDEE"
+    )
     @PreAuthorize("hasRole('ATTENDEE')")
     @PostMapping("/purchase")
     public ResponseEntity<List<TicketResponse>> purchaseTicket(
             @Valid @RequestBody PurchaseTicketRequest request
     ) {
 
-        // Delegate to service
-        List<TicketResponse> responses = ticketService.purchaseTicket(request);
-
-        // Return 201 CREATED
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(responses);
+                .body(ticketService.purchaseTicket(request));
     }
 
     /**
-     * Retrieve all tickets for the current user.
+     * Get current user's tickets.
      */
-    @GetMapping("/me")
+    @Operation(
+            summary = "Get my tickets",
+            description = "Requires role: ATTENDEE"
+    )
     @PreAuthorize("hasRole('ATTENDEE')")
+    @GetMapping("/me")
     public ResponseEntity<List<TicketResponse>> getMyTickets() {
 
-        // Call service to fetch user's tickets
-        List<TicketResponse> tickets = ticketService.getMyTickets();
-
-        // Return 200 OK with result
-        return ResponseEntity.ok(tickets);
+        return ResponseEntity.ok(
+                ticketService.getMyTickets()
+        );
     }
-
 }

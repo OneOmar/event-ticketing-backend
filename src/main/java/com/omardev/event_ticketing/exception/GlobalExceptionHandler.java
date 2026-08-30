@@ -4,17 +4,22 @@ import com.omardev.event_ticketing.dto.response.ErrorResponse;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Global exception handler for consistent API error responses.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * Handle all business exceptions (ApiException)
+     * Handle business exceptions (custom)
      */
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex) {
@@ -28,7 +33,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidationException(
             MethodArgumentNotValidException ex
     ) {
-
         List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -39,7 +43,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handle NOT FOUND exceptions
+     * Handle NOT FOUND
      */
     @ExceptionHandler(EventNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(EventNotFoundException ex) {
@@ -47,19 +51,37 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Fallback for unexpected errors
+     * Handle forbidden access (user has no required role)
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Access denied", List.of());
+    }
+
+    /**
+     * Handle authentication errors (missing/invalid token)
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", List.of());
+    }
+
+    /**
+     * Fallback for unexpected errors (keep LAST)
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
+        ex.printStackTrace(); // TODO: replace with logger
+
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Something went wrong",
+                "Unexpected server error",
                 List.of()
         );
     }
 
     /**
-     * Build a consistent error response
+     * Build consistent error response
      */
     private ResponseEntity<ErrorResponse> buildResponse(
             HttpStatus status,
