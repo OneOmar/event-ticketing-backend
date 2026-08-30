@@ -134,6 +134,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Swagger / OpenAPI (Spring Boot 4 compatible) -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
