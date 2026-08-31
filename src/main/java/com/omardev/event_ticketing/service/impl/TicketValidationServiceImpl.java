@@ -13,11 +13,13 @@ import com.omardev.event_ticketing.repository.TicketValidationRepository;
 import com.omardev.event_ticketing.service.TicketValidationService;
 import com.omardev.event_ticketing.util.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TicketValidationServiceImpl implements TicketValidationService {
@@ -31,13 +33,20 @@ public class TicketValidationServiceImpl implements TicketValidationService {
     public ValidateTicketResponse validateTicket(ValidateTicketRequest request) {
 
         // 1. Fetch QR with lock (avoid double scan)
+        log.info("Validating QR {}", request.qrCode());
+
         QrCode qrCode = qrCodeRepository
                 .findByCodeForUpdate(request.qrCode())
-                .orElseThrow(() -> new ApiException("QR code not found"));
+                .orElseThrow(() -> {
+                    log.warn("QR code not found: {}", request.qrCode());
+                    return new ApiException("QR code not found");
+                });
 
 
         // 2. Check already used
         if (qrCode.getUsedAt() != null) {
+            log.warn("QR already used: {}", request.qrCode());
+
             saveValidation(qrCode, TicketValidationStatus.FAILED, "Already used");
             return new ValidateTicketResponse(
                     false,
@@ -49,6 +58,8 @@ public class TicketValidationServiceImpl implements TicketValidationService {
 
         // 3. Check status
         if (qrCode.getStatus() != QrCodeStatus.ACTIVE) {
+            log.warn("QR not active: {}", request.qrCode());
+
             saveValidation(qrCode, TicketValidationStatus.FAILED, "QR not active");
             return new ValidateTicketResponse(
                     false,
@@ -61,6 +72,8 @@ public class TicketValidationServiceImpl implements TicketValidationService {
         // 4. Check expiration
         if (qrCode.getExpiresAt() != null &&
                 qrCode.getExpiresAt().isBefore(LocalDateTime.now())) {
+
+            log.warn("QR expired: {}", request.qrCode());
 
             saveValidation(qrCode, TicketValidationStatus.FAILED, "QR expired");
             return new ValidateTicketResponse(
@@ -77,6 +90,8 @@ public class TicketValidationServiceImpl implements TicketValidationService {
 
         // 6. Save validation
         saveValidation(qrCode, TicketValidationStatus.SUCCESS, "Validated");
+
+        log.info("QR {} validated successfully", request.qrCode());
 
         return new ValidateTicketResponse(
                 true,

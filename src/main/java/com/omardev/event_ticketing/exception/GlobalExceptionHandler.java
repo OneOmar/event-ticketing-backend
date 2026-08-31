@@ -25,6 +25,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex) {
+
+        log.warn("Business exception: {}", ex.getMessage());
+
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), List.of());
     }
 
@@ -35,11 +38,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidationException(
             MethodArgumentNotValidException ex
     ) {
+
         List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(DefaultMessageSourceResolvable::getDefaultMessage)
                 .toList();
+
+        log.warn("Validation failed: {}", errors);
 
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
     }
@@ -49,6 +55,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(EventNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(EventNotFoundException ex) {
+
+        log.warn("Resource not found: {}", ex.getMessage());
+
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), List.of());
     }
 
@@ -57,6 +66,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+
+        log.warn("Access denied: {}", ex.getMessage());
+
         return buildResponse(HttpStatus.FORBIDDEN, "Access denied", List.of());
     }
 
@@ -65,6 +77,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+
+        log.warn("Authentication error: {}", ex.getMessage());
+
         return buildResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", List.of());
     }
 
