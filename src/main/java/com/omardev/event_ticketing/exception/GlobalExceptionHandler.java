@@ -1,6 +1,7 @@
 package com.omardev.event_ticketing.exception;
 
 import com.omardev.event_ticketing.dto.response.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 /**
  * Global exception handler for consistent API error responses.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -71,7 +73,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
-        ex.printStackTrace(); // TODO: replace with logger
+
+        // Log full error with stack trace
+        log.error("Unexpected error occurred", ex);
 
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
