@@ -132,7 +132,7 @@ public class TicketServiceImpl implements TicketService {
         log.info("Fetching tickets for user {}", user.getId());
 
         // 2. Fetch tickets
-        List<Ticket> tickets = ticketRepository.findByOwnerId(user.getId());
+        List<Ticket> tickets = ticketRepository.findByOwnerIdWithQrCodes(user.getId());
 
         // 3. Map → response
         return tickets.stream()
