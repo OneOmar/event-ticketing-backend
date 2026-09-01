@@ -14,6 +14,7 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -38,7 +39,9 @@ public class EventController {
     public ResponseEntity<Page<EventResponse>> getPublishedEvents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) LocalDateTime startDate,
+            @RequestParam(required = false) LocalDateTime endDate
     ) {
 
         Pageable pageable = PageRequest.of(
@@ -48,7 +51,7 @@ public class EventController {
         );
 
         return ResponseEntity.ok(
-                eventService.getPublishedEvents(pageable, keyword)
+                eventService.getPublishedEvents(pageable, keyword, startDate, endDate)
         );
     }
 
@@ -61,7 +64,7 @@ public class EventController {
     )
     @GetMapping("/{id}")
     public ResponseEntity<EventResponse> getEventById(@PathVariable UUID id) {
-        return ResponseEntity.ok(eventService.getEventById(id));
+        return ResponseEntity.ok(eventService.findEventById(id));
     }
 
     /**
@@ -81,7 +84,7 @@ public class EventController {
         Pageable pageable = PageRequest.of(page, size);
 
         return ResponseEntity.ok(
-                eventService.getMyEvents(pageable, status)
+                eventService.findEventsByCurrentUser(pageable, status)
         );
     }
 

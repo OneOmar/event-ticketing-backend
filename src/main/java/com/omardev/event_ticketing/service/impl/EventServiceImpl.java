@@ -51,20 +51,27 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public Page<EventResponse> getPublishedEvents(
             Pageable pageable,
-            String keyword
+            String keyword,
+            LocalDateTime startDate,
+            LocalDateTime endDate
     ) {
 
         Page<Event> events;
 
         // 1. If a keyword is provided → search
         if (keyword != null && !keyword.isBlank()) {
-
-            events = eventRepository.searchPublishedEvents(keyword, pageable);
-
+            // Keyword + optional date filters
+            events = eventRepository.findPublishedByKeywordAndDateRange(
+                    keyword.trim(),
+                    startDate,
+                    endDate,
+                    pageable
+            );
         } else {
-            // 2. Otherwise → get all published events
-            events = eventRepository.findByStatus(
-                    EventStatus.PUBLISHED,
+            // Date filtering (or fallback)
+            events = eventRepository.findPublishedByDateRange(
+                    startDate,
+                    endDate,
                     pageable
             );
         }
@@ -75,7 +82,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public EventResponse getEventById(UUID eventId) {
+    public EventResponse findEventById(UUID eventId) {
 
         // 1. Fetch event from DB
         Event event = eventRepository.findById(eventId)
@@ -258,13 +265,13 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<EventResponse> getMyEvents(Pageable pageable, EventStatus status) {
+    public Page<EventResponse> findEventsByCurrentUser(Pageable pageable, EventStatus status) {
 
         User user = currentUserProvider.getCurrentUser();
 
         Page<Event> events = (status != null)
-                ? eventRepository.findByOrganizer_IdAndStatus(user.getId(), status, pageable)
-                : eventRepository.findByOrganizer_Id(user.getId(), pageable);
+                ? eventRepository.findByOrganizerIdAndStatus(user.getId(), status, pageable)
+                : eventRepository.findByOrganizerId(user.getId(), pageable);
 
         return events.map(eventMapper::toResponse);
     }
