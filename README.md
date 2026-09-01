@@ -173,9 +173,6 @@ mvn test
 ---
 
 ## Maintainers
-- Omar El Manssouri — repository owner
+- Omar El Manssouri
 
 ---
-
-## License
-Add your license information here (e.g., MIT).
