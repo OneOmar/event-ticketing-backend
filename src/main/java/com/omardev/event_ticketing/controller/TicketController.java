@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Ticket management endpoints.
@@ -56,5 +57,24 @@ public class TicketController {
         return ResponseEntity.ok(
                 ticketService.getMyTickets()
         );
+    }
+
+    /**
+     * Download the QR code image for a given ticket.
+     * Accessible only by the ticket owner (ATTENDEE role).
+     * Returns the QR code as a PNG file for download.
+     */
+    @GetMapping("/{id}/qr")
+    @PreAuthorize("hasRole('ATTENDEE')")
+    public ResponseEntity<byte[]> downloadQr(@PathVariable UUID id) {
+
+        byte[] qrImage = ticketService.getTicketQr(id);
+
+        return ResponseEntity.ok()
+                // Dynamic filename (better UX)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=ticket-" + id + ".png")
+                .contentType(MediaType.IMAGE_PNG)
+                .body(qrImage);
     }
 }
