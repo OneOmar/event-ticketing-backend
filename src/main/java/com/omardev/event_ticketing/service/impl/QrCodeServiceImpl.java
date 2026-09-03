@@ -29,7 +29,7 @@ public class QrCodeServiceImpl implements QrCodeService {
 
         // 3. Build QrCode entity
         QrCode qrCode = QrCode.builder()
-                .id(UUID.randomUUID()) // manual UUID (you removed @GeneratedValue)
+                .id(UUID.randomUUID()) // manual UUID
                 .code(code)
                 .status(QrCodeStatus.ACTIVE)
                 .expiresAt(LocalDateTime.now().plusHours(6)) // simple expiration rule
@@ -38,5 +38,13 @@ public class QrCodeServiceImpl implements QrCodeService {
 
         // 4. Return entity (saving will be done in another layer)
         return qrCode;
+    }
+
+    /**
+     * Generate QR code image (PNG) from a given code.
+     */
+    @Override
+    public byte[] generateImage(String code) {
+        return qrCodeGenerator.generate(code);
     }
 }

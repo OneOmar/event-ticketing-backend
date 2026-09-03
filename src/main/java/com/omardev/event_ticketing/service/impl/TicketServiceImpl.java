@@ -151,4 +151,41 @@ public class TicketServiceImpl implements TicketService {
                 })
                 .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] getTicketQr(UUID ticketId) {
+
+        // 1. Current user
+        User user = currentUserProvider.getCurrentUser();
+        log.info("User {} requesting QR for ticket {}", user.getId(), ticketId);
+
+        // 2. Fetch ticket
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> {
+                    log.warn("Ticket not found: {}", ticketId);
+                    return new TicketNotFoundException(ticketId);
+                });
+
+        // 3. Ownership check
+        if (!ticket.getOwner().getId().equals(user.getId())) {
+            log.warn("Unauthorized QR access attempt by user {} for ticket {}",
+                    user.getId(), ticketId);
+            throw new ApiException("You are not allowed to access this ticket");
+        }
+
+        // 4. Get latest QR
+        QrCode qrCode = ticket.getQrCodes().isEmpty()
+                ? null
+                : ticket.getQrCodes().getFirst();
+
+        if (qrCode == null) {
+            log.warn("QR not found for ticket {}", ticketId);
+            throw new ApiException("QR code not found for this ticket");
+        }
+
+        // 5. Generate image via service
+        log.info("QR image generated for ticket {}", ticketId);
+        return qrCodeService.generateImage(qrCode.getCode());
+    }
 }

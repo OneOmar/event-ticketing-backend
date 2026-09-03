@@ -4,6 +4,7 @@ import com.omardev.event_ticketing.dto.request.PurchaseTicketRequest;
 import com.omardev.event_ticketing.dto.response.TicketResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface TicketService {
 
@@ -16,4 +17,9 @@ public interface TicketService {
      * Retrieve all tickets for the current user.
      */
     List<TicketResponse> getMyTickets();
+
+    /**
+     * Generate and return a QR code image (PNG).
+     */
+    byte[] getTicketQr(UUID ticketId);
 }
