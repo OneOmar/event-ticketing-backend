@@ -88,6 +88,9 @@ public class TicketValidationServiceImpl implements TicketValidationService {
         qrCode.setUsedAt(LocalDateTime.now());
         qrCode.setStatus(QrCodeStatus.USED);
 
+        // Persist update
+        qrCodeRepository.save(qrCode);
+
         // 6. Save validation
         saveValidation(qrCode, TicketValidationStatus.SUCCESS, "Validated");
 

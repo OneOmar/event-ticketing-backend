@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "Ticket Validation", description = "Validate tickets using QR codes")
 @RestController
-@RequestMapping("/api/v1/tickets")
+@RequestMapping("/api/v1/ticket-validations")
 @RequiredArgsConstructor
 public class TicketValidationController {
 
